@@ -20,7 +20,11 @@ if "history" not in st.session_state:
 # -------------------------
 # TABS
 # -------------------------
-tab1, tab2 = st.tabs(["🔮 Predict Salary", "📊 History"])
+tab1, tab2, tab3 = st.tabs([
+    "🔮 Predict Salary",
+    "📊 History",
+    "📈 Analytics Dashboard"
+])
 
 # =========================================================
 # TAB 1 - PREDICTION
@@ -99,3 +103,65 @@ with tab2:
 
         # Simple trend graph
         st.line_chart(df["predicted_salary"])
+
+with tab3:
+
+    st.title("📈 Analytics Dashboard")
+
+    if len(st.session_state.history) == 0:
+        st.info("No data available. Make some predictions first.")
+    else:
+
+        df = pd.DataFrame(st.session_state.history)
+
+        # -----------------------------
+        # KPI METRICS
+        # -----------------------------
+        st.subheader("📌 Key Metrics")
+
+        col1, col2, col3 = st.columns(3)
+
+        col1.metric("Total Predictions", len(df))
+        col2.metric("Avg Salary", f"₹ {df['predicted_salary'].mean():,.0f}")
+        col3.metric("Max Salary", f"₹ {df['predicted_salary'].max():,.0f}")
+
+        st.divider()
+
+        # -----------------------------
+        # SALARY TREND
+        # -----------------------------
+        st.subheader("📊 Salary Trend")
+
+        st.line_chart(df["predicted_salary"])
+
+        st.divider()
+
+        # -----------------------------
+        # DISTRIBUTION
+        # -----------------------------
+        st.subheader("📉 Salary Distribution")
+
+        import matplotlib.pyplot as plt
+
+        fig, ax = plt.subplots()
+        ax.hist(df["predicted_salary"], bins=10)
+        ax.set_title("Salary Distribution")
+        ax.set_xlabel("Salary")
+        ax.set_ylabel("Frequency")
+
+        st.pyplot(fig)
+
+        st.divider()
+
+        # -----------------------------
+        # FEATURE ANALYSIS
+        # -----------------------------
+        st.subheader("🧠 Feature Insights")
+
+        feature_cols = ["experience", "education", "age", "certifications", "projects"]
+
+        avg_features = df[feature_cols].mean()
+
+        st.bar_chart(avg_features)
+
+        st.caption("Average input values used in predictions")
