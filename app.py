@@ -1,50 +1,32 @@
-from flask import Flask, request, jsonify, render_template
-import joblib
+import streamlit as st
 import numpy as np
-import matplotlib.pyplot as plt
-import io
-import base64
+import joblib
 
-app = Flask(__name__)
-
-# -----------------------------
-# LOAD MODEL + FEATURES
-# -----------------------------
+# -------------------------
+# LOAD MODEL
+# -------------------------
 model = joblib.load("model.pkl")
 features = joblib.load("features.pkl")
 
+st.title("💰 Salary Prediction App")
 
-# -----------------------------
-# HOME PAGE
-# -----------------------------
-@app.route("/")
-def home():
-    return render_template("index.html")
+# -------------------------
+# INPUT FIELDS
+# -------------------------
+experience = st.number_input("Experience", 0, 50)
+education = st.number_input("Education Level (1-4)", 1, 4)
+age = st.number_input("Age", 18, 100)
+certifications = st.number_input("Certifications", 0, 20)
+projects = st.number_input("Projects", 0, 50)
 
+# -------------------------
+# PREDICTION
+# -------------------------
+if st.button("Predict Salary"):
 
-# -----------------------------
-# PREDICTION API
-# -----------------------------
-@app.route("/predict", methods=["POST"])
-def predict():
-
-    data = request.json
-
-    # -------------------------
-    # INPUTS (must match training order)
-    # -------------------------
-    experience = int(data["experience"])
-    education_level = int(data["education_level"])
-    age = int(data["age"])
-    certifications = int(data["certifications"])
-    projects = int(data["projects"])
-
-    # -------------------------
-    # MODEL INPUT
-    # -------------------------
     input_data = np.array([[
         experience,
-        education_level,
+        education,
         age,
         certifications,
         projects
@@ -52,33 +34,13 @@ def predict():
 
     prediction = model.predict(input_data)[0]
 
-    # -------------------------
-    # GRAPH GENERATION
-    # -------------------------
-    labels = features
-    values = [experience, education_level, age, certifications, projects]
+    st.success(f"Predicted Salary: ₹ {round(prediction, 2)}")
 
-    plt.figure(figsize=(6,4))
-    plt.bar(labels, values)
-    plt.title("User Input Features")
-
-    img = io.BytesIO()
-    plt.savefig(img, format="png")
-    img.seek(0)
-
-    graph_base64 = base64.b64encode(img.getvalue()).decode()
-
-    # -------------------------
-    # RESPONSE
-    # -------------------------
-    return jsonify({
-        "predicted_salary": round(prediction, 2),
-        "graph": graph_base64
+    # Feature display
+    st.bar_chart({
+        "experience": experience,
+        "education": education,
+        "age": age,
+        "certifications": certifications,
+        "projects": projects
     })
-
-
-# -----------------------------
-# RUN SERVER
-# -----------------------------
-if __name__ == "__main__":
-    app.run(debug=True)
