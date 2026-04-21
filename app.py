@@ -21,9 +21,6 @@ st.set_page_config(page_title="Salary Predictor", layout="centered")
 if "history" not in st.session_state:
     st.session_state.history = []
 
-if "predicted" not in st.session_state:
-    st.session_state.predicted = False
-
 # -------------------------
 # TABS
 # -------------------------
@@ -40,17 +37,65 @@ with tab1:
 
     st.title("💰 Salary Prediction System")
 
+    # -------------------------
+    # ORIGINAL INPUTS
+    # -------------------------
     experience = st.number_input("Experience", 0, 50, value=1)
     education = st.number_input("Education Level (1-4)", 1, 4, value=1)
     age = st.number_input("Age", 18, 100, value=25)
     certifications = st.number_input("Certifications", 0, 20, value=0)
     projects = st.number_input("Projects", 0, 50, value=1)
 
+    # =====================================================
+    # 🔥 WHAT-IF ANALYSIS (NEW FEATURE)
+    # =====================================================
+    st.subheader("🧠 What-If Analysis (Interactive AI)")
+
+    w_exp = st.slider("Change Experience", 0, 50, experience)
+    w_edu = st.slider("Change Education", 1, 4, education)
+    w_age = st.slider("Change Age", 18, 100, age)
+    w_cert = st.slider("Change Certifications", 0, 20, certifications)
+    w_proj = st.slider("Change Projects", 0, 50, projects)
+
+    what_if_input = np.array([[
+        w_exp,
+        w_edu,
+        w_age,
+        w_cert,
+        w_proj
+    ]])
+
+    what_if_salary = model.predict(what_if_input)[0]
+
+    st.info(f"📊 What-If Predicted Salary: ₹ {round(what_if_salary, 2)}")
+
+    # =====================================================
+    # 🔥 SKILL IMPACT ANALYZER (NEW FEATURE)
+    # =====================================================
+    st.subheader("📊 Skill Impact Analyzer")
+
+    base_input = np.array([[experience, education, age, certifications, projects]])
+    base_salary = model.predict(base_input)[0]
+
+    impact = {}
+
+    feature_names = ["Experience", "Education", "Age", "Certifications", "Projects"]
+
+    for i, name in enumerate(feature_names):
+
+        temp = base_input.copy()
+        temp[0][i] += 1
+
+        new_salary = model.predict(temp)[0]
+        impact[name] = new_salary - base_salary
+
+    st.bar_chart(impact)
+
+    # =====================================================
+    # MAIN PREDICTION BUTTON
+    # =====================================================
     if st.button("Predict Salary"):
 
-        # -------------------------
-        # MODEL INPUT (ORDER FIXED)
-        # -------------------------
         input_data = np.array([[
             experience,
             education,
@@ -75,8 +120,6 @@ with tab1:
             "projects": projects,
             "predicted_salary": round(prediction, 2)
         })
-
-        st.session_state.predicted = True
 
         # -------------------------
         # VISUALIZATION
@@ -141,7 +184,7 @@ with tab3:
         st.divider()
 
         # -------------------------
-        # SALARY TREND
+        # TREND
         # -------------------------
         st.subheader("📊 Salary Trend")
         st.line_chart(df["predicted_salary"])
@@ -170,8 +213,6 @@ with tab3:
 
         feature_cols = ["experience", "education", "age", "certifications", "projects"]
 
-        avg_features = df[feature_cols].mean()
-
-        st.bar_chart(avg_features)
+        st.bar_chart(df[feature_cols].mean())
 
         st.caption("Average values used in predictions")
