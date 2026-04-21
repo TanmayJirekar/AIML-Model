@@ -34,6 +34,7 @@ page = st.sidebar.radio("Navigation Logs", [
     "🏠 Dashboard & Predictor",
     "📈 Career Growth & Advisor",
     "🧬 Model Comparison & XAI",
+    "⚖️ What-If Simulator",
     "📂 Resume Auto-Parser",
     "📊 History & Reports"
 ])
