@@ -5,3 +5,7 @@ scikit-learn
 joblib
 matplotlib
 plotly
+seaborn
+xgboost
+PyPDF2
+fpdf2
