@@ -2,6 +2,7 @@ import streamlit as st
 import numpy as np
 import joblib
 import pandas as pd
+import matplotlib.pyplot as plt
 from datetime import datetime
 
 # -------------------------
@@ -9,13 +10,19 @@ from datetime import datetime
 # -------------------------
 model = joblib.load("model.pkl")
 
+# -------------------------
+# PAGE CONFIG
+# -------------------------
 st.set_page_config(page_title="Salary Predictor", layout="centered")
 
 # -------------------------
-# SESSION STORAGE (HISTORY)
+# SESSION STATE INIT
 # -------------------------
 if "history" not in st.session_state:
     st.session_state.history = []
+
+if "predicted" not in st.session_state:
+    st.session_state.predicted = False
 
 # -------------------------
 # TABS
@@ -33,14 +40,17 @@ with tab1:
 
     st.title("💰 Salary Prediction System")
 
-    experience = st.number_input("Experience", 0, 50)
-    education = st.number_input("Education Level (1-4)", 1, 4)
-    age = st.number_input("Age", 18, 100)
-    certifications = st.number_input("Certifications", 0, 20)
-    projects = st.number_input("Projects", 0, 50)
+    experience = st.number_input("Experience", 0, 50, value=1)
+    education = st.number_input("Education Level (1-4)", 1, 4, value=1)
+    age = st.number_input("Age", 18, 100, value=25)
+    certifications = st.number_input("Certifications", 0, 20, value=0)
+    projects = st.number_input("Projects", 0, 50, value=1)
 
     if st.button("Predict Salary"):
 
+        # -------------------------
+        # MODEL INPUT (ORDER FIXED)
+        # -------------------------
         input_data = np.array([[
             experience,
             education,
@@ -54,7 +64,7 @@ with tab1:
         st.success(f"💰 Predicted Salary: ₹ {round(prediction, 2)}")
 
         # -------------------------
-        # SAVE TO HISTORY
+        # SAVE HISTORY
         # -------------------------
         st.session_state.history.append({
             "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -65,6 +75,8 @@ with tab1:
             "projects": projects,
             "predicted_salary": round(prediction, 2)
         })
+
+        st.session_state.predicted = True
 
         # -------------------------
         # VISUALIZATION
@@ -91,7 +103,6 @@ with tab2:
 
         st.dataframe(df)
 
-        # Optional: download CSV
         csv = df.to_csv(index=False).encode("utf-8")
 
         st.download_button(
@@ -101,22 +112,24 @@ with tab2:
             "text/csv"
         )
 
-        # Simple trend graph
         st.line_chart(df["predicted_salary"])
 
+# =========================================================
+# TAB 3 - ANALYTICS DASHBOARD
+# =========================================================
 with tab3:
 
     st.title("📈 Analytics Dashboard")
 
     if len(st.session_state.history) == 0:
-        st.info("No data available. Make some predictions first.")
+        st.warning("⚠ Make at least one prediction to view analytics.")
     else:
 
         df = pd.DataFrame(st.session_state.history)
 
-        # -----------------------------
+        # -------------------------
         # KPI METRICS
-        # -----------------------------
+        # -------------------------
         st.subheader("📌 Key Metrics")
 
         col1, col2, col3 = st.columns(3)
@@ -127,21 +140,18 @@ with tab3:
 
         st.divider()
 
-        # -----------------------------
+        # -------------------------
         # SALARY TREND
-        # -----------------------------
+        # -------------------------
         st.subheader("📊 Salary Trend")
-
         st.line_chart(df["predicted_salary"])
 
         st.divider()
 
-        # -----------------------------
+        # -------------------------
         # DISTRIBUTION
-        # -----------------------------
+        # -------------------------
         st.subheader("📉 Salary Distribution")
-
-        import matplotlib.pyplot as plt
 
         fig, ax = plt.subplots()
         ax.hist(df["predicted_salary"], bins=10)
@@ -153,9 +163,9 @@ with tab3:
 
         st.divider()
 
-        # -----------------------------
-        # FEATURE ANALYSIS
-        # -----------------------------
+        # -------------------------
+        # FEATURE INSIGHTS
+        # -------------------------
         st.subheader("🧠 Feature Insights")
 
         feature_cols = ["experience", "education", "age", "certifications", "projects"]
@@ -164,4 +174,4 @@ with tab3:
 
         st.bar_chart(avg_features)
 
-        st.caption("Average input values used in predictions")
+        st.caption("Average values used in predictions")
